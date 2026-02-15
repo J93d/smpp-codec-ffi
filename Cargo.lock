@@ -504,6 +504,7 @@ name = "smpp-codec-ffi"
 version = "0.1.0"
 dependencies = [
  "smpp-codec",
+ "thiserror",
  "uniffi",
 ]
 

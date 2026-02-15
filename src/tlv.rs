@@ -215,18 +215,24 @@ pub fn tlv_encode(tlv: &Tlv) -> Vec<u8> {
     buffer
 }
 
+use crate::common::SmppFfiError;
+
 /// Decodes a byte buffer into a TLV.
 ///
 /// # Errors
 ///
-/// Returns an error string if the decoding fails.
+/// Returns an error if the decoding fails.
 #[uniffi::export]
-pub fn tlv_decode(buffer: &[u8]) -> Result<Tlv, String> {
+pub fn tlv_decode(buffer: &[u8]) -> Result<Tlv, SmppFfiError> {
     let mut cursor = std::io::Cursor::new(buffer);
     match NativeTlv::decode(&mut cursor) {
         Ok(Some(native)) => Ok(native.into()),
-        Ok(None) => Err("Buffer too short to decode TLV".to_string()),
-        Err(e) => Err(format!("Decoding failed: {}", e)),
+        Ok(None) => Err(SmppFfiError::Generic {
+            msg: "Buffer too short to decode TLV".to_string(),
+        }),
+        Err(e) => Err(SmppFfiError::Generic {
+            msg: format!("Decoding failed: {}", e),
+        }),
     }
 }
 
@@ -234,31 +240,37 @@ pub fn tlv_decode(buffer: &[u8]) -> Result<Tlv, String> {
 ///
 /// # Errors
 ///
-/// Returns an error string if the conversion fails.
+/// Returns an error if the conversion fails.
 #[uniffi::export]
-pub fn tlv_value_as_u8(tlv: &Tlv) -> Result<u8, String> {
+pub fn tlv_value_as_u8(tlv: &Tlv) -> Result<u8, SmppFfiError> {
     let internal_tlv: NativeTlv = tlv.clone().into();
-    internal_tlv.value_as_u8().map_err(|e| e.to_string())
+    internal_tlv
+        .value_as_u8()
+        .map_err(|e| SmppFfiError::Generic { msg: e.to_string() })
 }
 
 /// Extracts the value of the TLV as a u16.
 ///
 /// # Errors
 ///
-/// Returns an error string if the conversion fails.
+/// Returns an error if the conversion fails.
 #[uniffi::export]
-pub fn tlv_value_as_u16(tlv: &Tlv) -> Result<u16, String> {
+pub fn tlv_value_as_u16(tlv: &Tlv) -> Result<u16, SmppFfiError> {
     let internal_tlv: NativeTlv = tlv.clone().into();
-    internal_tlv.value_as_u16().map_err(|e| e.to_string())
+    internal_tlv
+        .value_as_u16()
+        .map_err(|e| SmppFfiError::Generic { msg: e.to_string() })
 }
 
 /// Extracts the value of the TLV as a String.
 ///
 /// # Errors
 ///
-/// Returns an error string if the conversion fails.
+/// Returns an error if the conversion fails.
 #[uniffi::export]
-pub fn tlv_value_as_string(tlv: &Tlv) -> Result<String, String> {
+pub fn tlv_value_as_string(tlv: &Tlv) -> Result<String, SmppFfiError> {
     let internal_tlv: NativeTlv = tlv.clone().into();
-    internal_tlv.value_as_string().map_err(|e| e.to_string())
+    internal_tlv
+        .value_as_string()
+        .map_err(|e| SmppFfiError::Generic { msg: e.to_string() })
 }

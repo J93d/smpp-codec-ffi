@@ -10,6 +10,7 @@ name = "smpp_codec_ffi"
 [dependencies]
 smpp-codec = "0.2.1"
 uniffi = { version = "0.28", features = ["cli"] }
+thiserror = "1.0"
 
 [build-dependencies]
 uniffi = { version = "0.28", features = ["build"] }

@@ -3,6 +3,17 @@
 //! This module contains common bindings for UniFFI
 use smpp_codec::common;
 
+/// Common error type for FFI operations.
+#[derive(Debug, thiserror::Error, uniffi::Error)]
+pub enum SmppFfiError {
+    /// Generic error with a message.
+    #[error("{msg}")]
+    Generic {
+        /// The error message.
+        msg: String,
+    },
+}
+
 // --- Command IDs ---
 // These constants define the Command ID for each SMPP PDU.
 

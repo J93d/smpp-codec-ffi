@@ -1,4 +1,4 @@
-use crate::common::{Npi, Ton};
+use crate::common::{Npi, SmppFfiError, Ton};
 use crate::tlv::Tlv;
 use smpp_codec::pdus::{
     CancelBroadcastSm as NativeCancelBroadcastSmRequest,
@@ -262,7 +262,7 @@ pub fn encode_cancel_broadcast_sm_request(request: &CancelBroadcastSmRequest) ->
 #[uniffi::export]
 pub fn decode_cancel_broadcast_sm_request(
     buffer: &[u8],
-) -> Result<CancelBroadcastSmRequest, String> {
+) -> Result<CancelBroadcastSmRequest, SmppFfiError> {
     match NativeCancelBroadcastSmRequest::decode(buffer) {
         Ok(internal_request) => Ok(CancelBroadcastSmRequest {
             sequence_number: internal_request.sequence_number,
@@ -277,7 +277,7 @@ pub fn decode_cancel_broadcast_sm_request(
                 .map(|t| t.clone().into())
                 .collect(),
         }),
-        Err(e) => Err(e.to_string()),
+        Err(e) => Err(SmppFfiError::Generic { msg: e.to_string() }),
     }
 }
 
@@ -308,14 +308,14 @@ pub fn encode_cancel_broadcast_sm_response(response: &CancelBroadcastSmResponse)
 #[uniffi::export]
 pub fn decode_cancel_broadcast_sm_response(
     buffer: &[u8],
-) -> Result<CancelBroadcastSmResponse, String> {
+) -> Result<CancelBroadcastSmResponse, SmppFfiError> {
     match NativeCancelBroadcastSmResponse::decode(buffer) {
         Ok(internal_response) => Ok(CancelBroadcastSmResponse {
             sequence_number: internal_response.sequence_number,
             command_status: internal_response.command_status,
             status_description: internal_response.status_description,
         }),
-        Err(e) => Err(e.to_string()),
+        Err(e) => Err(SmppFfiError::Generic { msg: e.to_string() }),
     }
 }
 
@@ -350,7 +350,7 @@ pub fn encode_cancel_sm_request(request: &CancelSmRequest) -> Vec<u8> {
 ///
 /// Returns an error string if the decoding fails.
 #[uniffi::export]
-pub fn decode_cancel_sm_request(buffer: &[u8]) -> Result<CancelSmRequest, String> {
+pub fn decode_cancel_sm_request(buffer: &[u8]) -> Result<CancelSmRequest, SmppFfiError> {
     match NativeCancelSmRequest::decode(buffer) {
         Ok(internal_request) => Ok(CancelSmRequest {
             sequence_number: internal_request.sequence_number,
@@ -363,7 +363,7 @@ pub fn decode_cancel_sm_request(buffer: &[u8]) -> Result<CancelSmRequest, String
             dest_addr_npi: internal_request.dest_addr_npi.into(),
             dest_addr: internal_request.dest_addr,
         }),
-        Err(e) => Err(e.to_string()),
+        Err(e) => Err(SmppFfiError::Generic { msg: e.to_string() }),
     }
 }
 
@@ -392,14 +392,14 @@ pub fn encode_cancel_sm_response(response: &CancelSmResponse) -> Vec<u8> {
 ///
 /// Returns an error string if the decoding fails.
 #[uniffi::export]
-pub fn decode_cancel_sm_response(buffer: &[u8]) -> Result<CancelSmResponse, String> {
+pub fn decode_cancel_sm_response(buffer: &[u8]) -> Result<CancelSmResponse, SmppFfiError> {
     match NativeCancelSmResponse::decode(buffer) {
         Ok(internal_response) => Ok(CancelSmResponse {
             sequence_number: internal_response.sequence_number,
             command_status: internal_response.command_status,
             status_description: internal_response.status_description,
         }),
-        Err(e) => Err(e.to_string()),
+        Err(e) => Err(SmppFfiError::Generic { msg: e.to_string() }),
     }
 }
 
@@ -430,7 +430,7 @@ pub fn encode_query_sm_request(request: &QuerySmRequest) -> Vec<u8> {
 ///
 /// Returns an error string if the decoding fails.
 #[uniffi::export]
-pub fn decode_query_sm_request(buffer: &[u8]) -> Result<QuerySmRequest, String> {
+pub fn decode_query_sm_request(buffer: &[u8]) -> Result<QuerySmRequest, SmppFfiError> {
     match NativeQuerySmRequest::decode(buffer) {
         Ok(internal_request) => Ok(QuerySmRequest {
             sequence_number: internal_request.sequence_number,
@@ -439,7 +439,7 @@ pub fn decode_query_sm_request(buffer: &[u8]) -> Result<QuerySmRequest, String> 
             source_addr_npi: internal_request.source_addr_npi.into(),
             source_addr: internal_request.source_addr,
         }),
-        Err(e) => Err(e.to_string()),
+        Err(e) => Err(SmppFfiError::Generic { msg: e.to_string() }),
     }
 }
 
@@ -472,7 +472,7 @@ pub fn encode_query_sm_response(response: &QuerySmResponse) -> Vec<u8> {
 ///
 /// Returns an error string if the decoding fails.
 #[uniffi::export]
-pub fn decode_query_sm_response(buffer: &[u8]) -> Result<QuerySmResponse, String> {
+pub fn decode_query_sm_response(buffer: &[u8]) -> Result<QuerySmResponse, SmppFfiError> {
     match NativeQuerySmResponse::decode(buffer) {
         Ok(internal_response) => Ok(QuerySmResponse {
             sequence_number: internal_response.sequence_number,
@@ -483,7 +483,7 @@ pub fn decode_query_sm_response(buffer: &[u8]) -> Result<QuerySmResponse, String
             error_code: internal_response.error_code,
             status_description: internal_response.status_description,
         }),
-        Err(e) => Err(e.to_string()),
+        Err(e) => Err(SmppFfiError::Generic { msg: e.to_string() }),
     }
 }
 
@@ -519,7 +519,9 @@ pub fn encode_query_broadcast_sm_request(request: &QueryBroadcastSmRequest) -> V
 ///
 /// Returns an error string if the decoding fails.
 #[uniffi::export]
-pub fn decode_query_broadcast_sm_request(buffer: &[u8]) -> Result<QueryBroadcastSmRequest, String> {
+pub fn decode_query_broadcast_sm_request(
+    buffer: &[u8],
+) -> Result<QueryBroadcastSmRequest, SmppFfiError> {
     match NativeQueryBroadcastSmRequest::decode(buffer) {
         Ok(internal_request) => Ok(QueryBroadcastSmRequest {
             sequence_number: internal_request.sequence_number,
@@ -533,7 +535,7 @@ pub fn decode_query_broadcast_sm_request(buffer: &[u8]) -> Result<QueryBroadcast
                 .map(|t| t.into())
                 .collect(),
         }),
-        Err(e) => Err(e.to_string()),
+        Err(e) => Err(SmppFfiError::Generic { msg: e.to_string() }),
     }
 }
 
@@ -570,7 +572,7 @@ pub fn encode_query_broadcast_sm_response(response: &QueryBroadcastSmResponse) -
 #[uniffi::export]
 pub fn decode_query_broadcast_sm_response(
     buffer: &[u8],
-) -> Result<QueryBroadcastSmResponse, String> {
+) -> Result<QueryBroadcastSmResponse, SmppFfiError> {
     match NativeQueryBroadcastSmResponse::decode(buffer) {
         Ok(internal_response) => Ok(QueryBroadcastSmResponse {
             sequence_number: internal_response.sequence_number,
@@ -583,7 +585,7 @@ pub fn decode_query_broadcast_sm_response(
                 .map(|t| t.into())
                 .collect(),
         }),
-        Err(e) => Err(e.to_string()),
+        Err(e) => Err(SmppFfiError::Generic { msg: e.to_string() }),
     }
 }
 
@@ -619,7 +621,7 @@ pub fn encode_replace_sm_request(request: &ReplaceSmRequest) -> Vec<u8> {
 ///
 /// Returns an error string if the decoding fails.
 #[uniffi::export]
-pub fn decode_replace_sm_request(buffer: &[u8]) -> Result<ReplaceSmRequest, String> {
+pub fn decode_replace_sm_request(buffer: &[u8]) -> Result<ReplaceSmRequest, SmppFfiError> {
     match NativeReplaceSmRequest::decode(buffer) {
         Ok(internal_request) => Ok(ReplaceSmRequest {
             sequence_number: internal_request.sequence_number,
@@ -633,7 +635,7 @@ pub fn decode_replace_sm_request(buffer: &[u8]) -> Result<ReplaceSmRequest, Stri
             sm_default_msg_id: internal_request.sm_default_msg_id,
             short_message: internal_request.short_message,
         }),
-        Err(e) => Err(e.to_string()),
+        Err(e) => Err(SmppFfiError::Generic { msg: e.to_string() }),
     }
 }
 
@@ -662,13 +664,13 @@ pub fn encode_replace_sm_response(response: &ReplaceSmResponse) -> Vec<u8> {
 ///
 /// Returns an error string if the decoding fails.
 #[uniffi::export]
-pub fn decode_replace_sm_response(buffer: &[u8]) -> Result<ReplaceSmResponse, String> {
+pub fn decode_replace_sm_response(buffer: &[u8]) -> Result<ReplaceSmResponse, SmppFfiError> {
     match NativeReplaceSmResponse::decode(buffer) {
         Ok(internal_response) => Ok(ReplaceSmResponse {
             sequence_number: internal_response.sequence_number,
             command_status: internal_response.command_status,
             status_description: internal_response.status_description,
         }),
-        Err(e) => Err(e.to_string()),
+        Err(e) => Err(SmppFfiError::Generic { msg: e.to_string() }),
     }
 }

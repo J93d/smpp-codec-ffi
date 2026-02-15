@@ -1,3 +1,4 @@
+use crate::common::SmppFfiError;
 use smpp_codec::splitter as common;
 
 /// Encoding type for message splitting.
@@ -81,9 +82,9 @@ pub fn split_message(
     text: String,
     encoding: EncodingType,
     mode: SplitMode,
-) -> Result<SplitResult, String> {
+) -> Result<SplitResult, SmppFfiError> {
     let (parts, data_coding) = common::MessageSplitter::split(text, encoding.into(), mode.into())
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| SmppFfiError::Generic { msg: e.to_string() })?;
 
     Ok(SplitResult { parts, data_coding })
 }

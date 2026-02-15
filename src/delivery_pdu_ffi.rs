@@ -1,4 +1,4 @@
-use crate::common::{Npi, Ton};
+use crate::common::{Npi, SmppFfiError, Ton};
 use crate::tlv::Tlv;
 use smpp_codec::pdus::{
     DataSm as InternalDataSm, DataSmResp as InternalDataSmResponse,
@@ -165,7 +165,7 @@ pub fn encode_data_sm(request: &DataSm) -> Vec<u8> {
 ///
 /// Returns an error string if the decoding fails.
 #[uniffi::export]
-pub fn decode_data_sm(buffer: &[u8]) -> Result<DataSm, String> {
+pub fn decode_data_sm(buffer: &[u8]) -> Result<DataSm, SmppFfiError> {
     match InternalDataSm::decode(buffer) {
         Ok(internal_request) => Ok(DataSm {
             sequence_number: internal_request.sequence_number,
@@ -185,7 +185,7 @@ pub fn decode_data_sm(buffer: &[u8]) -> Result<DataSm, String> {
                 .map(|t| t.into())
                 .collect(),
         }),
-        Err(e) => Err(e.to_string()),
+        Err(e) => Err(SmppFfiError::Generic { msg: e.to_string() }),
     }
 }
 
@@ -234,7 +234,7 @@ pub fn encode_deliver_sm(request: &DeliverSmRequest) -> Vec<u8> {
 ///
 /// Returns an error string if the decoding fails.
 #[uniffi::export]
-pub fn decode_deliver_sm(buffer: &[u8]) -> Result<DeliverSmRequest, String> {
+pub fn decode_deliver_sm(buffer: &[u8]) -> Result<DeliverSmRequest, SmppFfiError> {
     match InternalDeliverSmRequest::decode(buffer) {
         Ok(internal_request) => Ok(DeliverSmRequest {
             sequence_number: internal_request.sequence_number,
@@ -269,7 +269,7 @@ pub fn decode_deliver_sm(buffer: &[u8]) -> Result<DeliverSmRequest, String> {
                 .map(|t| t.into())
                 .collect(),
         }),
-        Err(e) => Err(e.to_string()),
+        Err(e) => Err(SmppFfiError::Generic { msg: e.to_string() }),
     }
 }
 
@@ -320,7 +320,7 @@ pub fn encode_data_sm_response(response: &DataSmResponse) -> Vec<u8> {
 ///
 /// Returns an error string if the decoding fails.
 #[uniffi::export]
-pub fn decode_data_sm_response(buffer: &[u8]) -> Result<DataSmResponse, String> {
+pub fn decode_data_sm_response(buffer: &[u8]) -> Result<DataSmResponse, SmppFfiError> {
     match InternalDataSmResponse::decode(buffer) {
         Ok(internal_response) => Ok(DataSmResponse {
             sequence_number: internal_response.sequence_number,
@@ -333,7 +333,7 @@ pub fn decode_data_sm_response(buffer: &[u8]) -> Result<DataSmResponse, String> 
                 .map(|t| t.into())
                 .collect(),
         }),
-        Err(e) => Err(e.to_string()),
+        Err(e) => Err(SmppFfiError::Generic { msg: e.to_string() }),
     }
 }
 
@@ -363,7 +363,7 @@ pub fn encode_delivery_sm_response(response: &DeliverSmResponse) -> Vec<u8> {
 ///
 /// Returns an error string if the decoding fails.
 #[uniffi::export]
-pub fn decode_delivery_sm_response(buffer: &[u8]) -> Result<DeliverSmResponse, String> {
+pub fn decode_delivery_sm_response(buffer: &[u8]) -> Result<DeliverSmResponse, SmppFfiError> {
     match InternalDeliverSmResponse::decode(buffer) {
         Ok(internal_response) => Ok(DeliverSmResponse {
             sequence_number: internal_response.sequence_number,
@@ -371,6 +371,6 @@ pub fn decode_delivery_sm_response(buffer: &[u8]) -> Result<DeliverSmResponse, S
             message_id: internal_response.message_id,
             status_description: internal_response.status_description,
         }),
-        Err(e) => Err(e.to_string()),
+        Err(e) => Err(SmppFfiError::Generic { msg: e.to_string() }),
     }
 }

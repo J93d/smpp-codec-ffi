@@ -1,4 +1,4 @@
-use crate::common::{Npi, Ton};
+use crate::common::{Npi, SmppFfiError, Ton};
 use crate::tlv::Tlv;
 use smpp_codec::pdus::{
     BroadcastSm as NativeBroadcastSmRequest, BroadcastSmResp as NativeBroadcastSmResponse,
@@ -89,7 +89,7 @@ pub fn encode_broadcast_sm_request(request: &BroadcastSmRequest) -> Vec<u8> {
 ///
 /// Returns an error string if the decoding fails.
 #[uniffi::export]
-pub fn decode_broadcast_sm_request(buffer: &[u8]) -> Result<BroadcastSmRequest, String> {
+pub fn decode_broadcast_sm_request(buffer: &[u8]) -> Result<BroadcastSmRequest, SmppFfiError> {
     match NativeBroadcastSmRequest::decode(buffer) {
         Ok(internal_request) => Ok(BroadcastSmRequest {
             sequence_number: internal_request.sequence_number,
@@ -118,7 +118,7 @@ pub fn decode_broadcast_sm_request(buffer: &[u8]) -> Result<BroadcastSmRequest, 
                 .map(|t| t.into())
                 .collect(),
         }),
-        Err(e) => Err(e.to_string()),
+        Err(e) => Err(SmppFfiError::Generic { msg: e.to_string() }),
     }
 }
 
@@ -153,7 +153,7 @@ pub fn encode_broadcast_sm_response(response: &BroadcastSmResponse) -> Vec<u8> {
 ///
 /// Returns an error string if the decoding fails.
 #[uniffi::export]
-pub fn decode_broadcast_sm_response(buffer: &[u8]) -> Result<BroadcastSmResponse, String> {
+pub fn decode_broadcast_sm_response(buffer: &[u8]) -> Result<BroadcastSmResponse, SmppFfiError> {
     match NativeBroadcastSmResponse::decode(buffer) {
         Ok(internal_response) => Ok(BroadcastSmResponse {
             sequence_number: internal_response.sequence_number,
@@ -166,6 +166,6 @@ pub fn decode_broadcast_sm_response(buffer: &[u8]) -> Result<BroadcastSmResponse
                 .map(|t| t.into())
                 .collect(),
         }),
-        Err(e) => Err(e.to_string()),
+        Err(e) => Err(SmppFfiError::Generic { msg: e.to_string() }),
     }
 }

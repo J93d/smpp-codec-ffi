@@ -1,4 +1,4 @@
-use crate::common::{Npi, Ton};
+use crate::common::{Npi, SmppFfiError, Ton};
 use crate::tlv::Tlv;
 use smpp_codec::pdus::{
     Destination as NativeDestination, SubmitMulti as InternalSubmitMultiRequest,
@@ -238,7 +238,7 @@ pub fn encode_submit_sm_request(request: &SubmitSmRequest) -> Vec<u8> {
 ///
 /// Returns an error string if the decoding fails.
 #[uniffi::export]
-pub fn decode_submit_sm_request(buffer: &[u8]) -> Result<SubmitSmRequest, String> {
+pub fn decode_submit_sm_request(buffer: &[u8]) -> Result<SubmitSmRequest, SmppFfiError> {
     match InternalSubmitSmRequest::decode(buffer) {
         Ok(internal_request) => Ok(SubmitSmRequest {
             sequence_number: internal_request.sequence_number,
@@ -273,7 +273,7 @@ pub fn decode_submit_sm_request(buffer: &[u8]) -> Result<SubmitSmRequest, String
                 .map(|t| t.into())
                 .collect(),
         }),
-        Err(e) => Err(e.to_string()),
+        Err(e) => Err(SmppFfiError::Generic { msg: e.to_string() }),
     }
 }
 
@@ -303,7 +303,7 @@ pub fn encode_submit_sm_response(response: &SubmitSmResponse) -> Vec<u8> {
 ///
 /// Returns an error string if the decoding fails.
 #[uniffi::export]
-pub fn decode_submit_sm_response(buffer: &[u8]) -> Result<SubmitSmResponse, String> {
+pub fn decode_submit_sm_response(buffer: &[u8]) -> Result<SubmitSmResponse, SmppFfiError> {
     match InternalSubmitSmResponse::decode(buffer) {
         Ok(internal_resp) => Ok(SubmitSmResponse {
             sequence_number: internal_resp.sequence_number,
@@ -311,7 +311,7 @@ pub fn decode_submit_sm_response(buffer: &[u8]) -> Result<SubmitSmResponse, Stri
             message_id: internal_resp.message_id,
             status_description: internal_resp.status_description,
         }),
-        Err(e) => Err(e.to_string()),
+        Err(e) => Err(SmppFfiError::Generic { msg: e.to_string() }),
     }
 }
 
@@ -358,7 +358,7 @@ pub fn encode_submit_multi_request(request: &SubmitMultiRequest) -> Vec<u8> {
 ///
 /// Returns an error string if the decoding fails.
 #[uniffi::export]
-pub fn decode_submit_multi_request(buffer: &[u8]) -> Result<SubmitMultiRequest, String> {
+pub fn decode_submit_multi_request(buffer: &[u8]) -> Result<SubmitMultiRequest, SmppFfiError> {
     match InternalSubmitMultiRequest::decode(buffer) {
         Ok(internal_resp) => Ok(SubmitMultiRequest {
             sequence_number: internal_resp.sequence_number,
@@ -395,7 +395,7 @@ pub fn decode_submit_multi_request(buffer: &[u8]) -> Result<SubmitMultiRequest, 
                 .map(|t| t.into())
                 .collect(),
         }),
-        Err(e) => Err(e.to_string()),
+        Err(e) => Err(SmppFfiError::Generic { msg: e.to_string() }),
     }
 }
 
@@ -430,7 +430,7 @@ pub fn encode_submit_multi_response(response: &SubmitMultiResponse) -> Vec<u8> {
 ///
 /// Returns an error string if the decoding fails.
 #[uniffi::export]
-pub fn decode_submit_multi_response(buffer: &[u8]) -> Result<SubmitMultiResponse, String> {
+pub fn decode_submit_multi_response(buffer: &[u8]) -> Result<SubmitMultiResponse, SmppFfiError> {
     match InternalSubmitMultiResponse::decode(buffer) {
         Ok(internal_resp) => Ok(SubmitMultiResponse {
             sequence_number: internal_resp.sequence_number,
@@ -443,6 +443,6 @@ pub fn decode_submit_multi_response(buffer: &[u8]) -> Result<SubmitMultiResponse
                 .map(|u| u.into())
                 .collect(),
         }),
-        Err(e) => Err(e.to_string()),
+        Err(e) => Err(SmppFfiError::Generic { msg: e.to_string() }),
     }
 }

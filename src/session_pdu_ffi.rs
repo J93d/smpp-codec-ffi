@@ -1,4 +1,4 @@
-use crate::common::{BindMode, Npi, Ton};
+use crate::common::{BindMode, Npi, SmppFfiError, Ton};
 use smpp_codec::common::get_status_description;
 use smpp_codec::pdus::{
     BindRequest as InternalBindRequest, BindResponse as InternalBindResponse,
@@ -64,7 +64,7 @@ pub fn encode_bind_request(req: &BindRequest) -> Vec<u8> {
 ///
 /// Returns an error string if the decoding fails.
 #[uniffi::export]
-pub fn decode_bind_request(buffer: &[u8]) -> Result<BindRequest, String> {
+pub fn decode_bind_request(buffer: &[u8]) -> Result<BindRequest, SmppFfiError> {
     match InternalBindRequest::decode(buffer) {
         Ok(internal_resp) => Ok(BindRequest {
             sequence_number: internal_resp.sequence_number,
@@ -77,7 +77,7 @@ pub fn decode_bind_request(buffer: &[u8]) -> Result<BindRequest, String> {
             addr_npi: internal_resp.addr_npi.into(),
             address_range: internal_resp.address_range,
         }),
-        Err(e) => Err(e.to_string()),
+        Err(e) => Err(SmppFfiError::Generic { msg: e.to_string() }),
     }
 }
 
@@ -112,12 +112,12 @@ pub fn encode_enquire_link(req: &EnquireLink) -> Vec<u8> {
 ///
 /// Returns an error string if the decoding fails.
 #[uniffi::export]
-pub fn decode_enquire_link(buffer: &[u8]) -> Result<EnquireLink, String> {
+pub fn decode_enquire_link(buffer: &[u8]) -> Result<EnquireLink, SmppFfiError> {
     match InternalEnquireLinkRequest::decode(buffer) {
         Ok(internal_resp) => Ok(EnquireLink {
             sequence_number: internal_resp.sequence_number,
         }),
-        Err(e) => Err(e.to_string()),
+        Err(e) => Err(SmppFfiError::Generic { msg: e.to_string() }),
     }
 }
 
@@ -156,13 +156,13 @@ pub fn encode_outbind(req: &Outbind) -> Vec<u8> {
 ///
 /// Returns an error string if the decoding fails.
 #[uniffi::export]
-pub fn decode_outbind(buffer: &[u8]) -> Result<Outbind, String> {
+pub fn decode_outbind(buffer: &[u8]) -> Result<Outbind, SmppFfiError> {
     match InternalOutbindRequest::decode(buffer) {
         Ok(internal_resp) => Ok(Outbind {
             sequence_number: internal_resp.sequence_number,
             system_id: internal_resp.system_id,
         }),
-        Err(e) => Err(e.to_string()),
+        Err(e) => Err(SmppFfiError::Generic { msg: e.to_string() }),
     }
 }
 
@@ -196,12 +196,12 @@ pub fn encode_unbind(req: &Unbind) -> Vec<u8> {
 ///
 /// Returns an error string if the decoding fails.
 #[uniffi::export]
-pub fn decode_unbind(buffer: &[u8]) -> Result<Unbind, String> {
+pub fn decode_unbind(buffer: &[u8]) -> Result<Unbind, SmppFfiError> {
     match InternalUnbindRequest::decode(buffer) {
         Ok(internal_resp) => Ok(Unbind {
             sequence_number: internal_resp.sequence_number,
         }),
-        Err(e) => Err(e.to_string()),
+        Err(e) => Err(SmppFfiError::Generic { msg: e.to_string() }),
     }
 }
 
@@ -239,13 +239,13 @@ pub fn encode_generic_nack(req: &GenericNack) -> Vec<u8> {
 ///
 /// Returns an error string if the decoding fails.
 #[uniffi::export]
-pub fn decode_generic_nack(buffer: &[u8]) -> Result<GenericNack, String> {
+pub fn decode_generic_nack(buffer: &[u8]) -> Result<GenericNack, SmppFfiError> {
     match InternalGenericNack::decode(buffer) {
         Ok(internal_resp) => Ok(GenericNack {
             sequence_number: internal_resp.sequence_number,
             command_status: internal_resp.command_status,
         }),
-        Err(e) => Err(e.to_string()),
+        Err(e) => Err(SmppFfiError::Generic { msg: e.to_string() }),
     }
 }
 
@@ -290,14 +290,14 @@ pub fn encode_bind_response(req: &BindResponse) -> Vec<u8> {
 ///
 /// Returns an error string if the decoding fails.
 #[uniffi::export]
-pub fn decode_bind_response(buffer: &[u8]) -> Result<BindResponse, String> {
+pub fn decode_bind_response(buffer: &[u8]) -> Result<BindResponse, SmppFfiError> {
     match InternalBindResponse::decode(buffer) {
         Ok(internal_resp) => Ok(BindResponse {
             sequence_number: internal_resp.sequence_number,
             command_status: internal_resp.command_status,
             system_id: internal_resp.system_id,
         }),
-        Err(e) => Err(e.to_string()),
+        Err(e) => Err(SmppFfiError::Generic { msg: e.to_string() }),
     }
 }
 
@@ -335,13 +335,13 @@ pub fn encode_enquire_link_response(req: &EnquireLinkResponse) -> Vec<u8> {
 ///
 /// Returns an error string if the decoding fails.
 #[uniffi::export]
-pub fn decode_enquire_link_response(buffer: &[u8]) -> Result<EnquireLinkResponse, String> {
+pub fn decode_enquire_link_response(buffer: &[u8]) -> Result<EnquireLinkResponse, SmppFfiError> {
     match InternalEnquireLinkResponse::decode(buffer) {
         Ok(internal_resp) => Ok(EnquireLinkResponse {
             sequence_number: internal_resp.sequence_number,
             command_status: internal_resp.command_status,
         }),
-        Err(e) => Err(e.to_string()),
+        Err(e) => Err(SmppFfiError::Generic { msg: e.to_string() }),
     }
 }
 
@@ -379,12 +379,12 @@ pub fn encode_unbind_response(req: &UnbindResponse) -> Vec<u8> {
 ///
 /// Returns an error string if the decoding fails.
 #[uniffi::export]
-pub fn decode_unbind_response(buffer: &[u8]) -> Result<UnbindResponse, String> {
+pub fn decode_unbind_response(buffer: &[u8]) -> Result<UnbindResponse, SmppFfiError> {
     match InternalUnbindResponse::decode(buffer) {
         Ok(internal_resp) => Ok(UnbindResponse {
             sequence_number: internal_resp.sequence_number,
             command_status: internal_resp.command_status,
         }),
-        Err(e) => Err(e.to_string()),
+        Err(e) => Err(SmppFfiError::Generic { msg: e.to_string() }),
     }
 }
