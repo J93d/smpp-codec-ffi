@@ -2,6 +2,12 @@
 name = "smpp-codec-ffi"
 version = "0.1.0"
 edition = "2021"
+description = "An FFI binding for the smpp-codec crate"
+repository = "https://github.com/J93d/smpp-codec-ffi"
+readme = "README.md"
+keywords = ["smpp", "sms", "codec", "protocol", "telecom"]
+categories = ["encoding", "network-programming"]
+license = "Apache-2.0"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
