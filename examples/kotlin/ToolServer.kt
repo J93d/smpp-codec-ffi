@@ -87,7 +87,41 @@ fun handleClient(client: Socket) {
                 }
                 CMD_SUBMIT_SM -> {
                     val req = decodeSubmitSmRequest(fullPduList)
-                    println("Received SubmitSm")
+                    println("Received SubmitSm: ${req.sourceAddr} -> ${req.destinationAddr}")
+                    
+                    val isUdh = (req.esmClass.toInt() and 0x40) == 0x40
+                    var sarRef: Int? = null
+                    var sarTotal: Int? = null
+                    var sarSeq: Int? = null
+                    
+                    for (tlv in req.tlvs) {
+                        when (tlv.tag.toInt()) {
+                            Tags.SAR_MSG_REF_NUM.toInt() -> {
+                                // Extract u16 from value (2 bytes, big endian)
+                                if (tlv.value.size >= 2) {
+                                    sarRef = ((tlv.value[0].toInt() and 0xFF) shl 8) or (tlv.value[1].toInt() and 0xFF)
+                                }
+                            }
+                            Tags.SAR_TOTAL_SEGMENTS.toInt() -> {
+                                if (tlv.value.isNotEmpty()) {
+                                    sarTotal = tlv.value[0].toInt() and 0xFF
+                                }
+                            }
+                            Tags.SAR_SEGMENT_SEQNUM.toInt() -> {
+                                if (tlv.value.isNotEmpty()) {
+                                    sarSeq = tlv.value[0].toInt() and 0xFF
+                                }
+                            }
+                        }
+                    }
+                    
+                    if (isUdh) {
+                        println("  [DETECTION] UDH Concatenation detected")
+                    }
+                    if (sarRef != null) {
+                        println("  [DETECTION] SAR Concatenation detected: Ref=$sarRef, Part=$sarSeq/$sarTotal")
+                    }
+
                     val resp = SubmitSmResponse(
                         sequenceNumber = sequenceNumber.toUInt(),
                         messageId = "MsgID_12345"

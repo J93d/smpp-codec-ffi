@@ -93,36 +93,85 @@ func runClient() {
     sendData(encodeBindRequest(request: bindReq))
     readResponse(expectedId: CMD_BIND_TRANSCEIVER_RESP)
     
-    // 2. SubmitSm
-    print("\n--- 2. SubmitSm ---")
-    let submitReq = SubmitSmRequest(
-        sequenceNumber: 2,
-        serviceType: "CMT",
-        sourceAddrTon: .international,
-        sourceAddrNpi: .isdn,
-        sourceAddr: "123456",
-        destAddrTon: .national,
-        destAddrNpi: .isdn,
-        destinationAddr: "9876543210",
-        esmClass: 0,
-        protocolId: 0,
-        priorityFlag: 1,
-        scheduleDeliveryTime: "231201000000000R",
-        validityPeriod: "231202000000000R",
-        registeredDelivery: 1,
-        replaceIfPresentFlag: 0,
-        dataCoding: 0,
-        smDefaultMsgId: 0,
-        shortMessage: Data("Hello SubmitSm".utf8),
-        tlvs: [
-            tlvNewU16(tag: Tags.USER_MESSAGE_REFERENCE, value: 1),
-            tlvNewU16(tag: Tags.SAR_MSG_REF_NUM, value: 1),
-            tlvNewU8(tag: Tags.SAR_TOTAL_SEGMENTS, value: 2),
-            tlvNewU8(tag: Tags.SAR_SEGMENT_SEQNUM, value: 1)
-        ]
+    // 2a. Message Splitting Example (Concatenated SMS)
+    print("\n--- 2a. Message Splitting (UDH) ---")
+    let longMessage = "This is a very long message that needs to be split into multiple parts because it exceeds the standard SMPP short message length limit of 140-160 characters depending on the encoding used."
+    
+    let splitResult = try! splitMessage(
+        text: longMessage,
+        encoding: .gsm7Bit,
+        mode: .udh
     )
-    sendData(encodeSubmitSmRequest(request: submitReq))
-    readResponse(expectedId: CMD_SUBMIT_SM_RESP)
+    
+    print("Split message into \(splitResult.parts.count) parts (Data Coding: \(splitResult.dataCoding))")
+    
+    for (i, part) in splitResult.parts.enumerated() {
+        let partReq = SubmitSmRequest(
+            sequenceNumber: UInt32(100 + i),
+            serviceType: "CMT",
+            sourceAddrTon: .international,
+            sourceAddrNpi: .isdn,
+            sourceAddr: "123456",
+            destAddrTon: .national,
+            destAddrNpi: .isdn,
+            destinationAddr: "9876543210",
+            esmClass: 0x40, // Indicating UDH is present
+            protocolId: 0,
+            priorityFlag: 0,
+            scheduleDeliveryTime: nil,
+            validityPeriod: nil,
+            registeredDelivery: 0,
+            replaceIfPresentFlag: 0,
+            dataCoding: splitResult.dataCoding,
+            smDefaultMsgId: 0,
+            shortMessage: Data(part),
+            tlvs: []
+        )
+        print("Sending part \(i + 1)...")
+        sendData(encodeSubmitSmRequest(request: partReq))
+        readResponse(expectedId: CMD_SUBMIT_SM_RESP)
+    }
+
+    print("\n--- 2b. Message Splitting (SAR) ---")
+    let splitResultSar = try! splitMessage(
+        text: longMessage,
+        encoding: .gsm7Bit,
+        mode: .sar
+    )
+    
+    let refNum: UInt16 = 123
+    let totalParts = UInt8(splitResultSar.parts.count)
+    
+    for (i, part) in splitResultSar.parts.enumerated() {
+        let sarReq = SubmitSmRequest(
+            sequenceNumber: UInt32(200 + i),
+            serviceType: "CMT",
+            sourceAddrTon: .international,
+            sourceAddrNpi: .isdn,
+            sourceAddr: "123456",
+            destAddrTon: .national,
+            destAddrNpi: .isdn,
+            destinationAddr: "9876543210",
+            esmClass: 0,
+            protocolId: 0,
+            priorityFlag: 0,
+            scheduleDeliveryTime: nil,
+            validityPeriod: nil,
+            registeredDelivery: 0,
+            replaceIfPresentFlag: 0,
+            dataCoding: splitResultSar.dataCoding,
+            smDefaultMsgId: 0,
+            shortMessage: Data(part),
+            tlvs: [
+                tlvNewU16(tag: Tags.SAR_MSG_REF_NUM, value: refNum),
+                tlvNewU8(tag: Tags.SAR_TOTAL_SEGMENTS, value: totalParts),
+                tlvNewU8(tag: Tags.SAR_SEGMENT_SEQNUM, value: UInt8(i + 1))
+            ]
+        )
+        print("Sending part \(i + 1) (SAR)...")
+        sendData(encodeSubmitSmRequest(request: sarReq))
+        readResponse(expectedId: CMD_SUBMIT_SM_RESP)
+    }
     
     // 3. Unbind
     print("\n--- 3. Unbind ---")

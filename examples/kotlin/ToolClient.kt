@@ -39,36 +39,87 @@ fun main() {
         sendPdu(output, encodeBindRequest(bindReq))
         readResponse(input, CMD_BIND_TRANSCEIVER_RESP)
 
-        // 2. SubmitSm
-        println("\n--- 2. SubmitSm ---")
-        val submitReq = SubmitSmRequest(
-            sequenceNumber = 2u,
-            serviceType = "CMT",
-            sourceAddrTon = Ton.INTERNATIONAL,
-            sourceAddrNpi = Npi.ISDN,
-            sourceAddr = "123456",
-            destAddrTon = Ton.NATIONAL,
-            destAddrNpi = Npi.ISDN,
-            destinationAddr = "9876543210",
-            esmClass = 0u,
-            protocolId = 0u,
-            priorityFlag = 1u,
-            scheduleDeliveryTime = "231201000000000R",
-            validityPeriod = "231202000000000R",
-            registeredDelivery = 1u,
-            replaceIfPresentFlag = 0u,
-            dataCoding = 0u,
-            smDefaultMsgId = 0u,
-            shortMessage = "Hello SubmitSm".encodeToByteArray().toList(),
-            tlvs = listOf(
-                tlvNewU16(Tags.USER_MESSAGE_REFERENCE, 1u),
-                tlvNewU16(Tags.SAR_MSG_REF_NUM, 1u),
-                tlvNewU8(Tags.SAR_TOTAL_SEGMENTS, 2u),
-                tlvNewU8(Tags.SAR_SEGMENT_SEQNUM, 1u)
-            )
+        // 2a. Message Splitting Example (Concatenated SMS)
+        println("\n--- 2a. Message Splitting (UDH) ---")
+        val longMessage = "This is a very long message that needs to be split into multiple parts because it exceeds the standard SMPP short message length limit of 140-160 characters depending on the encoding used."
+        
+        val splitResult = splitMessage(
+            text = longMessage,
+            encoding = EncodingType.GSM7_BIT,
+            mode = SplitMode.UDH
         )
-        sendPdu(output, encodeSubmitSmRequest(submitReq))
-        readResponse(input, CMD_SUBMIT_SM_RESP)
+        
+        println("Split message into ${splitResult.parts.size} parts (Data Coding: ${splitResult.dataCoding})")
+        
+        for (i in splitResult.parts.indices) {
+            val part = splitResult.parts[i]
+            val partReq = SubmitSmRequest(
+                sequenceNumber = (100 + i).toUInt(),
+                serviceType = "CMT",
+                sourceAddrTon = Ton.INTERNATIONAL,
+                sourceAddrNpi = Npi.ISDN,
+                sourceAddr = "123456",
+                destAddrTon = Ton.NATIONAL,
+                destAddrNpi = Npi.ISDN,
+                destinationAddr = "9876543210",
+                esmClass = 0x40u, // Indicating UDH is present
+                protocolId = 0u,
+                priorityFlag = 0u,
+                scheduleDeliveryTime = null,
+                validityPeriod = null,
+                registeredDelivery = 0u,
+                replaceIfPresentFlag = 0u,
+                dataCoding = splitResult.dataCoding,
+                smDefaultMsgId = 0u,
+                shortMessage = part.toList(), // Convert to List<UByte>
+                tlvs = emptyList()
+            )
+            println("Sending part ${i + 1}...")
+            sendPdu(output, encodeSubmitSmRequest(partReq))
+            readResponse(input, CMD_SUBMIT_SM_RESP)
+        }
+
+        println("\n--- 2b. Message Splitting (SAR) ---")
+        val splitResultSar = splitMessage(
+            text = longMessage,
+            encoding = EncodingType.GSM7_BIT,
+            mode = SplitMode.SAR
+        )
+        
+        val refNum = 123u
+        val totalParts = splitResultSar.parts.size.toUByte()
+        
+        for (i in splitResultSar.parts.indices) {
+            val part = splitResultSar.parts[i]
+            val sarReq = SubmitSmRequest(
+                sequenceNumber = (200 + i).toUInt(),
+                serviceType = "CMT",
+                sourceAddrTon = Ton.INTERNATIONAL,
+                sourceAddrNpi = Npi.ISDN,
+                sourceAddr = "123456",
+                destAddrTon = Ton.NATIONAL,
+                destAddrNpi = Npi.ISDN,
+                destinationAddr = "9876543210",
+                esmClass = 0u,
+                protocolId = 0u,
+                priorityFlag = 0u,
+                scheduleDeliveryTime = null,
+                validityPeriod = null,
+                registeredDelivery = 0u,
+                replaceIfPresentFlag = 0u,
+                dataCoding = splitResultSar.dataCoding,
+                smDefaultMsgId = 0u,
+                shortMessage = part.toList(), // Convert to List<UByte>
+                tlvs = listOf(
+                    tlvNewU16(Tags.SAR_MSG_REF_NUM, refNum.toUShort()),
+                    tlvNewU8(Tags.SAR_TOTAL_SEGMENTS, totalParts),
+                    tlvNewU8(Tags.SAR_SEGMENT_SEQNUM, (i + 1).toUByte())
+                )
+            )
+            println("Sending part ${i + 1} (SAR)...")
+            sendPdu(output, encodeSubmitSmRequest(sarReq))
+            readResponse(input, CMD_SUBMIT_SM_RESP)
+        }
 
         // 3. Unbind
         println("\n--- 3. Unbind ---")

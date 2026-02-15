@@ -62,6 +62,31 @@ def handle_client(conn, addr):
             elif command_id == CMD_SUBMIT_SM:
                 req = smpp_codec_ffi.decode_submit_sm_request(full_pdu)
                 print(f"Received SubmitSm: {req.source_addr} -> {req.destination_addr}")
+                
+                # Concatenation Detection
+                is_udh = (req.esm_class & 0x40) == 0x40
+                sar_msg_ref = None
+                sar_total = None
+                sar_seq = None
+                
+                for tlv in req.tlvs:
+                    if tlv.tag == smpp_codec_ffi.Tags.SAR_MSG_REF_NUM:
+                        # Extract u16 from value (2 bytes, big endian)
+                        sar_msg_ref = struct.unpack(">H", bytes(tlv.value))[0]
+                    elif tlv.tag == smpp_codec_ffi.Tags.SAR_TOTAL_SEGMENTS:
+                        sar_total = tlv.value[0]
+                    elif tlv.tag == smpp_codec_ffi.Tags.SAR_SEGMENT_SEQNUM:
+                        sar_seq = tlv.value[0]
+                
+                if is_udh:
+                    print("  [DETECTION] UDH Concatenation detected")
+                    # In a real server, we would parse the UDH header from req.short_message[0:6] or [0:7]
+                    if len(req.short_message) > 6:
+                         print(f"  [DEBUG] UDH Info (Raw): {req.short_message[:6].hex()}")
+                
+                if sar_msg_ref is not None:
+                    print(f"  [DETECTION] SAR Concatenation detected: Ref={sar_msg_ref}, Part={sar_seq}/{sar_total}")
+
                 resp = smpp_codec_ffi.SubmitSmResponse(
                     sequence_number=sequence_number,
                     message_id="MsgID_12345"

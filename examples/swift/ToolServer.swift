@@ -92,8 +92,38 @@ func processPdu(_ connection: NWConnection, _ commandId: UInt32, _ sequenceNumbe
         )
         responseData = encodeBindResponse(response: resp)
     } else if commandId == CMD_SUBMIT_SM {
-         let _ = try! decodeSubmitSmRequest(buffer: data)
-         print("Received SubmitSm")
+         let req = try! decodeSubmitSmRequest(buffer: data)
+         print("Received SubmitSm: \(req.sourceAddr) -> \(req.destinationAddr)")
+         
+         // Concatenation Detection
+         let isUdh = (req.esmClass & 0x40) == 0x40
+         var sarRef: UInt16?
+         var sarTotal: UInt8?
+         var sarSeq: UInt8?
+         
+         for tlv in req.tlvs {
+             if tlv.tag == Tags.SAR_MSG_REF_NUM {
+                 if tlv.value.count >= 2 {
+                     sarRef = UInt16(tlv.value[0]) << 8 | UInt16(tlv.value[1])
+                 }
+             } else if tlv.tag == Tags.SAR_TOTAL_SEGMENTS {
+                 if !tlv.value.isEmpty {
+                     sarTotal = tlv.value[0]
+                 }
+             } else if tlv.tag == Tags.SAR_SEGMENT_SEQNUM {
+                 if !tlv.value.isEmpty {
+                     sarSeq = tlv.value[0]
+                 }
+             }
+         }
+         
+         if isUdh {
+             print("  [DETECTION] UDH Concatenation detected")
+         }
+         if let ref = sarRef {
+             print(String(format: "  [DETECTION] SAR Concatenation detected: Ref=%d, Part=%d/%d", ref, sarSeq ?? 0, sarTotal ?? 0))
+         }
+
          let resp = SubmitSmResponse(
              sequenceNumber: sequenceNumber,
              messageId: "MsgID_12345"

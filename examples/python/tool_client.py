@@ -74,36 +74,85 @@ def main():
         send_pdu(sock, smpp_codec_ffi.encode_bind_request(bind_req))
         read_response(sock, CMD_BIND_TRANSCEIVER_RESP)
 
-        # 2. SubmitSm
-        print("\n--- 2. SubmitSm ---")
-        submit_req = smpp_codec_ffi.SubmitSmRequest(
-            sequence_number=2,
-            service_type="CMT",
-            source_addr_ton=smpp_codec_ffi.Ton.INTERNATIONAL,
-            source_addr_npi=smpp_codec_ffi.Npi.ISDN,
-            source_addr="123456",
-            dest_addr_ton=smpp_codec_ffi.Ton.NATIONAL,
-            dest_addr_npi=smpp_codec_ffi.Npi.ISDN,
-            destination_addr="9876543210",
-            esm_class=0,
-            protocol_id=0,
-            priority_flag=1,
-            schedule_delivery_time="231201000000000R",
-            validity_period="231202000000000R",
-            registered_delivery=1,
-            replace_if_present_flag=0,
-            data_coding=0,
-            sm_default_msg_id=0,
-            short_message=b"Hello SubmitSm",
-            tlvs=[
-                smpp_codec_ffi.tlv_new_u16(smpp_codec_ffi.Tags.USER_MESSAGE_REFERENCE, 1),
-                smpp_codec_ffi.tlv_new_u16(smpp_codec_ffi.Tags.SAR_MSG_REF_NUM, 1),
-                smpp_codec_ffi.tlv_new_u8(smpp_codec_ffi.Tags.SAR_TOTAL_SEGMENTS, 2),
-                smpp_codec_ffi.tlv_new_u8(smpp_codec_ffi.Tags.SAR_SEGMENT_SEQNUM, 1)
-            ]
+        # 2a. Message Splitting Example (Concatenated SMS)
+        print("\n--- 2a. Message Splitting (UDH) ---")
+        long_message = "This is a very long message that needs to be split into multiple parts because it exceeds the standard SMPP short message length limit of 140-160 characters depending on the encoding used."
+        
+        split_result = smpp_codec_ffi.split_message(
+            text=long_message,
+            encoding=smpp_codec_ffi.EncodingType.GSM7_BIT,
+            mode=smpp_codec_ffi.SplitMode.UDH
         )
-        send_pdu(sock, smpp_codec_ffi.encode_submit_sm_request(submit_req))
-        read_response(sock, CMD_SUBMIT_SM_RESP)
+        
+        print(f"Split message into {len(split_result.parts)} parts (Data Coding: {split_result.data_coding})")
+        
+        for i, part in enumerate(split_result.parts):
+            part_req = smpp_codec_ffi.SubmitSmRequest(
+                sequence_number=100 + i,
+                service_type="CMT",
+                source_addr_ton=smpp_codec_ffi.Ton.INTERNATIONAL,
+                source_addr_npi=smpp_codec_ffi.Npi.ISDN,
+                source_addr="123456",
+                dest_addr_ton=smpp_codec_ffi.Ton.NATIONAL,
+                dest_addr_npi=smpp_codec_ffi.Npi.ISDN,
+                destination_addr="9876543210",
+                esm_class=0x40, # Indicating UDH is present
+                protocol_id=0,
+                priority_flag=0,
+                schedule_delivery_time=None,
+                validity_period=None,
+                registered_delivery=0,
+                replace_if_present_flag=0,
+                data_coding=split_result.data_coding,
+                sm_default_msg_id=0,
+                short_message=part,
+                tlvs=[]
+            )
+            print(f"Sending part {i+1}...")
+            send_pdu(sock, smpp_codec_ffi.encode_submit_sm_request(part_req))
+            read_response(sock, CMD_SUBMIT_SM_RESP)
+
+        print("\n--- 2b. Message Splitting (SAR) ---")
+        split_result_sar = smpp_codec_ffi.split_message(
+            text=long_message,
+            encoding=smpp_codec_ffi.EncodingType.GSM7_BIT,
+            mode=smpp_codec_ffi.SplitMode.SAR
+        )
+        
+        # In SAR mode, the parts are just the payloads. We need to add SAR TLVs.
+        # sar_msg_ref_num would typically be a random value for the whole message
+        ref_num = 123
+        total_parts = len(split_result_sar.parts)
+        
+        for i, part in enumerate(split_result_sar.parts):
+            sar_req = smpp_codec_ffi.SubmitSmRequest(
+                sequence_number=200 + i,
+                service_type="CMT",
+                source_addr_ton=smpp_codec_ffi.Ton.INTERNATIONAL,
+                source_addr_npi=smpp_codec_ffi.Npi.ISDN,
+                source_addr="123456",
+                dest_addr_ton=smpp_codec_ffi.Ton.NATIONAL,
+                dest_addr_npi=smpp_codec_ffi.Npi.ISDN,
+                destination_addr="9876543210",
+                esm_class=0x00, # No UDH
+                protocol_id=0,
+                priority_flag=0,
+                schedule_delivery_time=None,
+                validity_period=None,
+                registered_delivery: 0,
+                replace_if_present_flag: 0,
+                data_coding: split_result_sar.data_coding,
+                sm_default_msg_id: 0,
+                short_message: part,
+                tlvs: [
+                    smpp_codec_ffi.tlv_new_u16(smpp_codec_ffi.Tags.SAR_MSG_REF_NUM, ref_num),
+                    smpp_codec_ffi.tlv_new_u8(smpp_codec_ffi.Tags.SAR_TOTAL_SEGMENTS, total_parts),
+                    smpp_codec_ffi.tlv_new_u8(smpp_codec_ffi.Tags.SAR_SEGMENT_SEQNUM, i + 1)
+                ]
+            )
+            print(f"Sending part {i+1} (SAR)...")
+            send_pdu(sock, smpp_codec_ffi.encode_submit_sm_request(sar_req))
+            read_response(sock, CMD_SUBMIT_SM_RESP)
 
         # 3. DeliverSm
         print("\n--- 3. DeliverSm ---")
