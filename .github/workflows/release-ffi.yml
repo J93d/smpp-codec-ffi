@@ -72,3 +72,18 @@ jobs:
         with:
           name: bindings-python
           path: bindings/python
+
+      - name: Build Python Wheels
+        if: matrix.os == 'ubuntu-latest'
+        uses: PyO3/maturin-action@v1
+        with:
+          command: build
+          args: --release --out dist --find-interpreter
+          working-directory: smpp-codec-ffi
+
+      - name: Upload Python Wheels
+        if: matrix.os == 'ubuntu-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-wheels
+          path: smpp-codec-ffi/dist
