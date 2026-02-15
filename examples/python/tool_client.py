@@ -139,12 +139,12 @@ def main():
                 priority_flag=0,
                 schedule_delivery_time=None,
                 validity_period=None,
-                registered_delivery: 0,
-                replace_if_present_flag: 0,
-                data_coding: split_result_sar.data_coding,
-                sm_default_msg_id: 0,
-                short_message: part,
-                tlvs: [
+                registered_delivery=0,
+                replace_if_present_flag=0,
+                data_coding=split_result_sar.data_coding,
+                sm_default_msg_id=0,
+                short_message=part,
+                tlvs=[
                     smpp_codec_ffi.tlv_new_u16(smpp_codec_ffi.Tags.SAR_MSG_REF_NUM, ref_num),
                     smpp_codec_ffi.tlv_new_u8(smpp_codec_ffi.Tags.SAR_TOTAL_SEGMENTS, total_parts),
                     smpp_codec_ffi.tlv_new_u8(smpp_codec_ffi.Tags.SAR_SEGMENT_SEQNUM, i + 1)
