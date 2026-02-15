@@ -86,3 +86,74 @@ jobs:
         with:
           name: python-wheels
           path: dist
+
+  test-examples:
+    name: Test Examples on Ubuntu
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Download Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Prepare Shared Library
+        run: |
+          cp artifacts/libsmpp_codec_ffi-linux/libsmpp_codec_ffi.so .
+          echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$(pwd)" >> $GITHUB_ENV
+
+      - name: Test Python Examples
+        run: |
+          pip install artifacts/python-wheels/*.whl
+          # Run server in background
+          python examples/python/tool_server.py &
+          SERVER_PID=$!
+          sleep 2
+          # Run client
+          python examples/python/tool_client.py
+          kill $SERVER_PID
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: '11'
+          distribution: 'temurin'
+
+      - name: Test Java Examples
+        run: |
+          # 1. Download JNA
+          curl -L -o jna.jar https://repo1.maven.org/maven2/net/java/dev/jna/jna/5.13.0/jna-5.13.0.jar
+          
+          # 2. Install Kotlin Compiler
+          sudo snap install --classic kotlin
+          
+          # 3. Compile the generated Kotlin bridge
+          # The artifact was downloaded to artifacts/bindings-kotlin/
+          kotlinc artifacts/bindings-kotlin/uniffi/smpp_codec_ffi/smpp_codec_ffi.kt \
+            -cp jna.jar \
+            -include-runtime -d smpp-codec-ffi.jar
+          
+          # 4. Compile Java Examples
+          # We need to make sure the package structure matches: examples/java/ToolClient.java
+          # javac -cp "jna.jar:smpp-codec-ffi.jar" examples/java/*.java
+          # To keep it simple in CI and avoid package issues, we compile with -d .
+          javac -cp "jna.jar:smpp-codec-ffi.jar" -d . examples/java/*.java
+          
+          # 5. Run Server and Client
+          # Run server in background
+          java -cp ".:jna.jar:smpp-codec-ffi.jar" -Djava.library.path=. examples.java.ToolServer &
+          SERVER_PID=$!
+          sleep 3
+          
+          # Run client
+          java -cp ".:jna.jar:smpp-codec-ffi.jar" -Djava.library.path=. examples.java.ToolClient
+          
+          kill $SERVER_PID

@@ -12,20 +12,6 @@ let CMD_SUBMIT_SM: UInt32 = 0x00000004
 let CMD_UNBIND: UInt32 = 0x00000006
 let CMD_BIND_TRANSCEIVER: UInt32 = 0x00000009
 
-func runServer() {
-    let socket = CFSocketCreate(kCFAllocatorDefault, PF_INET, SOCK_STREAM, IPPROTO_TCP, 0, nil, nil)
-    // .. This is getting complicated to do robustly in a single script file without a framework.
-    // Swift scripts for networking usually use Network.framework or Foundation URLSession, but creating a raw TCP server
-    // is verbose. I will write a simplified mock server logic or a skeleton that assumes Network framework if available.
-    // Actually, let's use a very simple BSD socket approach if possible or just print instructions.
-    
-    print("Swift ToolServer implementation requires simpler networking for a script context.")
-    print("Please see ToolClient.swift for the client implementation.")
-}
-
-// NOTE: Implementing a full TCP server in a single Swift script is non-trivial compared to Python/Kotlin/Node.
-// For now, providing the logic structure.
-
 import Network
 
 @available(macOS 10.14, *)

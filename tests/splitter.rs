@@ -40,3 +40,35 @@ fn test_split_message_concat_sar() {
     assert!(result.parts.len() > 1);
     assert_eq!(result.data_coding, 0x03);
 }
+#[test]
+fn test_split_empty_message() {
+    let text = "".to_string();
+    let result = split_message(text, EncodingType::Gsm7Bit, SplitMode::Payload)
+        .expect("Failed to split empty message");
+
+    assert_eq!(result.parts.len(), 1);
+    assert!(result.parts[0].is_empty());
+}
+
+#[test]
+fn test_split_message_exact_limit() {
+    // 140 bytes is the limit for Payload mode (short_message field)
+    let text = "A".repeat(140);
+    let result = split_message(text, EncodingType::Latin1, SplitMode::Payload)
+        .expect("Failed to split message");
+
+    assert_eq!(result.parts.len(), 1);
+    assert_eq!(result.parts[0].len(), 140);
+}
+
+#[test]
+fn test_split_message_concat_udh() {
+    let text = "B".repeat(200);
+    // UDH mode: limit is 140 - 6 = 134 bytes per part
+    let result =
+        split_message(text, EncodingType::Latin1, SplitMode::Udh).expect("Failed to split message");
+
+    assert_eq!(result.parts.len(), 2);
+    // Each part should start with UDH (0x05 0x00 0x03 ...)
+    assert_eq!(result.parts[0][0], 0x05); // UDL (User Data Length of header)
+}

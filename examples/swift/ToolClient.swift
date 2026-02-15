@@ -173,9 +173,52 @@ func runClient() {
         readResponse(expectedId: CMD_SUBMIT_SM_RESP)
     }
     
-    // 3. Unbind
-    print("\n--- 3. Unbind ---")
-    let unbindReq = UnbindRequest(sequenceNumber: 13)
+    // 3. Multi-threaded / Concurrent SubmitSm
+    print("\n--- 3. Multi-threaded SubmitSm ---")
+    let group = DispatchGroup()
+    
+    for i in 0..<5 {
+        group.enter()
+        Task {
+            let seq = UInt32(300 + i)
+            let concurrentReq = SubmitSmRequest(
+                sequenceNumber: seq,
+                serviceType: "CMT",
+                sourceAddrTon: .international,
+                sourceAddrNpi: .isdn,
+                sourceAddr: "123456",
+                destAddrTon: .national,
+                destAddrNpi: .isdn,
+                destinationAddr: "9876543210",
+                esmClass: 0,
+                protocolId: 0,
+                priorityFlag: 0,
+                scheduleDeliveryTime: nil,
+                validityPeriod: nil,
+                registeredDelivery: 0,
+                replaceIfPresentFlag: 0,
+                dataCoding: 0,
+                smDefaultMsgId: 0,
+                shortMessage: Data("Hello from Swift Thread \(i)".utf8),
+                tlvs: []
+            )
+            
+            print("Sending concurrent request \(i)...")
+            sendData(encodeSubmitSmRequest(request: concurrentReq))
+            // In a real concurrent client, we would handle responses asynchronously
+            group.leave()
+        }
+    }
+    
+    group.wait()
+    // Read responses for the concurrent requests
+    for _ in 0..<5 {
+        readResponse(expectedId: CMD_SUBMIT_SM_RESP)
+    }
+
+    // 4. Unbind
+    print("\n--- 4. Unbind ---")
+    let unbindReq = UnbindRequest(sequenceNumber: 999)
     sendData(encodeUnbindRequest(request: unbindReq))
     readResponse(expectedId: CMD_UNBIND_RESP)
     
