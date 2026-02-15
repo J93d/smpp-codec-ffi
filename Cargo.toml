@@ -1,0 +1,15 @@
+[package]
+name = "smpp-codec-ffi"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+name = "smpp_codec_ffi"
+
+[dependencies]
+smpp-codec = "0.2.1"
+uniffi = { version = "0.28", features = ["cli"] }
+
+[build-dependencies]
+uniffi = { version = "0.28", features = ["build"] }
