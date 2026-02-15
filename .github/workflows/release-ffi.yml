@@ -76,17 +76,3 @@ jobs:
         with:
           name: bindings-python
           path: bindings/python
-
-      - name: Upload Kotlin Bindings
-        if: matrix.os == 'ubuntu-latest'
-        uses: actions/upload-artifact@v4
-        with:
-          name: bindings-kotlin
-          path: bindings/kotlin
-
-      - name: Upload Swift Bindings
-        if: matrix.os == 'ubuntu-latest'
-        uses: actions/upload-artifact@v4
-        with:
-          name: bindings-swift
-          path: bindings/swift
