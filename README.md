@@ -20,4 +20,4 @@ The API documentation is compliant with RFC 1574.
 
 ## License
 
-This project is licensed under the MIT License.
+This project is licensed under the Apache 2.0.
