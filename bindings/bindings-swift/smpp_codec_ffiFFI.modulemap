@@ -1,0 +1,4 @@
+module smpp_codec_ffiFFI {
+    header "smpp_codec_ffiFFI.h"
+    export *
+}
