@@ -1,7 +1,6 @@
 use smpp_codec_ffi::ancillary_pdu_ffi::*;
 use smpp_codec_ffi::common::{Npi, Ton};
 
-
 #[test]
 fn test_cancel_sm() {
     let req = CancelSmRequest {

@@ -1,7 +1,6 @@
 use smpp_codec_ffi::broadcast_pdu_ffi::*;
 use smpp_codec_ffi::common::{Npi, Ton};
 
-
 #[test]
 fn test_broadcast_sm() {
     let req = BroadcastSmRequest {

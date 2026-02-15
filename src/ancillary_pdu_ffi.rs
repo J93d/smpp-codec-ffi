@@ -4,10 +4,10 @@ use smpp_codec::pdus::{
     CancelBroadcastSm as NativeCancelBroadcastSmRequest,
     CancelBroadcastSmResp as NativeCancelBroadcastSmResponse,
     CancelSmRequest as NativeCancelSmRequest, CancelSmResponse as NativeCancelSmResponse,
-    QueryBroadcastSm as NativeQueryBroadcastSmRequest,
+    MessageState as NativeMessageState, QueryBroadcastSm as NativeQueryBroadcastSmRequest,
     QueryBroadcastSmResp as NativeQueryBroadcastSmResponse, QuerySmRequest as NativeQuerySmRequest,
     QuerySmResponse as NativeQuerySmResponse, ReplaceSm as NativeReplaceSmRequest,
-    ReplaceSmResp as NativeReplaceSmResponse, MessageState as NativeMessageState,
+    ReplaceSmResp as NativeReplaceSmResponse,
 };
 
 /// Represents the state of a message.
